@@ -53,7 +53,77 @@ def display_2types_g(SignalingGame, min_v, max_v,
             vertices.append([v[0], 0, v[1]])
             vertices.append([v[0], 1, v[1]])
         print(vertices)
-        add_trace_convexhull(vertices, fig, color_irs, name="yo")
+        add_trace_convexhull(vertices, fig, color_irs)
+        fig.add_trace(go.Scatter3d(
+            x=[None], y=[None], z=[None],
+            mode="markers",
+            marker=dict(size=18, color=color_irs),
+            name="IR"
+        ))
+
+    # Layout
+    fig.update_layout(
+                    scene=dict(
+                        xaxis_title='V_'+SignalingGame.T[0],
+                        yaxis_title='p('+SignalingGame.T[0]+")",
+                        zaxis_title='V_'+SignalingGame.T[1],
+                        xaxis=dict(range=[min_v, max_v]),
+                        yaxis=dict(range=[0, 1]),
+                        zaxis=dict(range=[min_v, max_v]),
+                        aspectmode='manual',
+                        aspectratio=dict(
+                            x=1,
+                            y=3/4,
+                            z=1
+                        ),
+                        camera=dict(
+                                    projection=dict(
+                                        type='orthographic'
+                                    )
+                        )
+                    ),
+                    title=title
+                )
+
+    if display:
+        fig.show()
+
+    if save_html_file_name is not None:
+        fig.write_html(save_html_file_name)
+
+
+def display_2types_BNE(SignalingGame, min_v, max_v,
+                       title="Representation of BNE",
+                       display_ir=False, color="blue",
+                       display=True, save_html_file_name=None):
+
+    BNE = SignalingGame.BNE_v_rep()
+
+    fig = go.Figure()
+
+    for bne in BNE:
+        # get bne in the right format
+        vertices = []
+        pk_v_rep = bne[1]
+        V, R, L = bne[0]
+        vk_v_rep = boxed_vk_v_rep(V, R, L, min_v, max_v)
+
+        for v_p in pk_v_rep[0]:
+            for v_v in vk_v_rep[0]:
+                vertices.append([v_v[0], v_p[0], v_v[1]])
+
+        add_trace_convexhull(vertices, fig, color)
+
+    if display_ir:
+        vertices = []
+        ineq, eq = SignalingGame.ir_h_rep
+        ineq, eq = boxed_vk_h_rep(ineq, eq, min_v, max_v)
+        V, R, L = h_rep_to_v_rep(ineq, eq)
+        for v in V:
+            vertices.append([v[0], 0, v[1]])
+            vertices.append([v[0], 1, v[1]])
+        print(vertices)
+        add_trace_convexhull(vertices, fig, color_irs)
         fig.add_trace(go.Scatter3d(
             x=[None], y=[None], z=[None],
             mode="markers",
@@ -113,8 +183,6 @@ def add_trace_convexhull(vertices, fig, color="blue", name="Object"):
     if len(vertices) == 0:
         return
     vertices, _, _ = canonicalize_v_rep(vertices, [], [])
-    if name == "yo":
-        print(vertices)
     vertices = np.asarray(vertices)
     points = np.array(vertices)
     dim = np.linalg.matrix_rank(points - points[0])

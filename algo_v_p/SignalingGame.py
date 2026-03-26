@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import chain, combinations, product
-from polyhedrons import h_rep_to_v_rep, v_rep_to_h_rep, canonicalize_h_rep
+from polyhedrons import h_rep_to_v_rep, v_rep_to_h_rep, canonicalize_h_rep, canonicalize_v_rep
 
 
 class SignalingGame:
@@ -13,7 +13,7 @@ class SignalingGame:
         self.ir_h_rep = self.ir_h_rep()
 
     def g_v_rep(self, include_ir_constraints=True):
-        # The v-rep of G will be represented (s, vk_v_rep, pk,v_rep)
+        # The v-rep of G will be represented (s, vk_v_rep, pk_v_rep)
         g_v_rep = []
         for s in self.S:
             # Function to generate all non-empty subsets as indices
@@ -30,6 +30,24 @@ class SignalingGame:
                    (len(vk_v_rep[0]) > 0 or len(vk_v_rep[1]) > 0 or len(vk_v_rep[2]) > 0):
                     g_v_rep.append((s, vk_v_rep, pk_v_rep))
         return g_v_rep
+
+    # mieux vaut memoiser et faire les technique du 2 a 2
+    def BNE_v_rep(self):
+        # The v-rep of BNE will be represented (vk_v_rep, pk_v_rep)
+        BNE_v_rep = []
+        K = self.non_empty_k_in_g(include_ir_constraints=True)
+        print(len(K))
+
+        def non_empty_index_subsets(n):
+            return chain.from_iterable(combinations(range(n), r) for r in range(1, n+1))
+
+        for Kti in non_empty_index_subsets(len(K)):
+            Kt = [K[i] for i in Kti]
+            vKt_v_rep = self.vKt_v_rep(Kt, include_ir_constraints=True)
+            Pjoin_v_rep = self.Pjoin_v_rep(Kt)
+            if len(vKt_v_rep[0]) > 0 and len(Pjoin_v_rep) > 0:
+                BNE_v_rep.append((vKt_v_rep, Pjoin_v_rep))
+        return BNE_v_rep
 
     def ir_h_rep(self):
         ir_ineq = []
@@ -50,6 +68,42 @@ class SignalingGame:
     def pk_v_rep(self, s, Tt, At):
         ineq, eq = self.__pk_h_rep(s, Tt, At)
         return h_rep_to_v_rep(ineq, eq)
+
+    def non_empty_k_in_g(self, include_ir_constraints=True):
+        K = []
+        for s in self.S:
+            # Function to generate all non-empty subsets as indices
+            def non_empty_index_subsets(n):
+                return chain.from_iterable(combinations(range(n), r) for r in range(1, n+1))
+            # Cartesian product of non-empty subsets' indices
+            PA_T_indices = product(non_empty_index_subsets(len(self.T)),
+                                   non_empty_index_subsets(len(self.A)))
+            for Tt, At in PA_T_indices:
+                pk_v_rep = self.pk_v_rep(s, Tt, At)
+                vk_h_rep = self.vk_h_rep(s, Tt, At, include_ir_constraints=include_ir_constraints)
+                vk_v_rep = h_rep_to_v_rep(vk_h_rep[0], vk_h_rep[1])
+                if len(pk_v_rep[0]) > 0 and \
+                   (len(vk_v_rep[0]) > 0 or len(vk_v_rep[1]) > 0 or len(vk_v_rep[2]) > 0):
+                    K.append((s, Tt, At))
+        return K
+
+    # vaut le coup de faire une version memoiser pour economiser du calcule
+    def vKt_v_rep(self, Kt, include_ir_constraints=True):
+        # Kt is a set of (s, Tt, AT)
+        ineq_vKt, eq_vKt = [], []
+        for k in Kt:
+            vk_ineq, vk_eq = self.vk_h_rep(k[0], k[1], k[2],
+                                           include_ir_constraints=include_ir_constraints)
+            ineq_vKt.extend(vk_ineq)
+            eq_vKt.extend(vk_eq)
+        return h_rep_to_v_rep(ineq_vKt, eq_vKt)
+
+    def Pjoin_v_rep(self, Kt):
+        # Kt is a set of (s, Tt, AT)
+        V = []
+        for k in Kt:
+            V.extend(self.pk_v_rep(k[0], k[1], k[2])[0])
+        return canonicalize_v_rep(V, [], [])
 
     def Us_index(self, t, s, a, t_index=True, s_index=True, a_index=True):
         if t_index:
