@@ -25,5 +25,4 @@ def Ur(t, s, a):
 
 
 G = SignalingGame(T, S, A, Us, Ur)
-display_2types_g(G, 0, 5, display_ir=True)
 display_2types_BNE(G, 0, 5)
