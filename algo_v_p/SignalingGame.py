@@ -1,6 +1,32 @@
 import numpy as np
 from itertools import chain, combinations, product
+from functools import lru_cache
 from polyhedrons import h_rep_to_v_rep, v_rep_to_h_rep, canonicalize_h_rep, canonicalize_v_rep
+
+
+def memoize_lists(func):
+    """
+    Mémoïse une méthode d’instance, transforme automatiquement les listes en tuples.
+    Ignore self pour le cache.
+    """
+    # Création d’un cache séparé
+    # La vraie fonction appelée inclut self, mais le cache ignore self
+    cached = lru_cache(maxsize=1000)(
+        lambda *args, **kwargs: func(*args, **kwargs)
+    )
+
+    def wrapper(self, *args, **kwargs):
+        # transforme les listes en tuples dans args
+        hashable_args = tuple(tuple(a) if isinstance(a, list) else a for a in args)
+        # transforme les listes en tuples dans kwargs et trie pour ordre stable
+        hashable_kwargs = tuple(
+            (k, tuple(v) if isinstance(v, list) else v)
+            for k, v in sorted(kwargs.items())
+        )
+        # Appelle la vraie fonction en incluant self
+        return cached(self, *hashable_args, **dict(hashable_kwargs))
+
+    return wrapper
 
 
 class SignalingGame:
@@ -58,6 +84,7 @@ class SignalingGame:
             ir_eq.extend(irs_eq)
         return canonicalize_h_rep(ir_ineq, ir_eq)
 
+    @memoize_lists
     def vk_h_rep(self, s, Tt, At, include_ir_constraints=True):
         vk_ineq, vk_eq = self.__vk_h_rep(s, Tt, At)
         if include_ir_constraints:
@@ -65,6 +92,7 @@ class SignalingGame:
             vk_eq.extend(self.ir_h_rep[1])
         return canonicalize_h_rep(vk_ineq, vk_eq)
 
+    @memoize_lists
     def pk_v_rep(self, s, Tt, At):
         ineq, eq = self.__pk_h_rep(s, Tt, At)
         return h_rep_to_v_rep(ineq, eq)

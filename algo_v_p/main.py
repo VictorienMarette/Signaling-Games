@@ -1,35 +1,29 @@
 from SignalingGame import SignalingGame
-from display_2types import display_2types_BNE
+from display_2types import display_2types_g, display_2types_BNE
 
-# Types, Signaux et Actions
-T = ["Faim", "Satié"]   # Types de l'envoyeur
-S = ["Silence", "Cri"]  # Signaux possibles
-A = ["Fuir", "Sapprocher", "Piège"]  # Actions du récepteur
+T = ["H", "L"]       # Types de l'émetteur : Haut et Bas
+S = ["S1", "S2", "S3"]  # Signaux possibles
+A = ["A1", "A2", "A3"]  # Actions possibles du récepteur
 
 
-# Utilité de l'envoyeur (U_s)
 def Us(t, s, a):
     tot = 0
-    # L'envoyeur aime obtenir de la nourriture
-    if t == "Faim" and a == "Sapprocher":
-        tot += 3
-    if t == "Satié" and a != "Piège":
+    # L'émetteur préfère certaines actions du récepteur
+    if a == "A3":
         tot += 2
-    # Le signal peut influencer légèrement
-    if (t == "Faim" and s == "Cri") or (t == "Satié" and s == "Silence"):
+    # Bonus si le signal correspond au type (exemple simple)
+    if (t == "H" and s == "S1") or (t == "L" and s == "S2"):
         tot += 1
     return tot
 
 
-# Utilité du récepteur (U_r)
 def Ur(t, s, a):
-    # Le récepteur gagne s'il devine correctement le type
-    if (t == "Faim" and a == "Piège") or (t == "Satié" and a == "Sapprocher"):
-        return 2
-    if (t == "Faim" and a == "Fuir") or (t == "Satié" and a == "Fuir"):
+    # Le récepteur gagne si l'action correspond au type réel
+    if (t == "H" and a == "A1") or (t == "L" and a == "A3"):
         return 1
     return 0
 
 
 G = SignalingGame(T, S, A, Us, Ur)
-display_2types_BNE(G, 0, 4)
+display_2types_g(G, 0, 5, display_ir=True)
+display_2types_BNE(G, 0, 5)

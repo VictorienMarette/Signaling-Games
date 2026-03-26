@@ -52,7 +52,6 @@ def display_2types_g(SignalingGame, min_v, max_v,
         for v in V:
             vertices.append([v[0], 0, v[1]])
             vertices.append([v[0], 1, v[1]])
-        print(vertices)
         add_trace_convexhull(vertices, fig, color_irs)
         fig.add_trace(go.Scatter3d(
             x=[None], y=[None], z=[None],
@@ -122,7 +121,6 @@ def display_2types_BNE(SignalingGame, min_v, max_v,
         for v in V:
             vertices.append([v[0], 0, v[1]])
             vertices.append([v[0], 1, v[1]])
-        print(vertices)
         add_trace_convexhull(vertices, fig, color_irs)
         fig.add_trace(go.Scatter3d(
             x=[None], y=[None], z=[None],
