@@ -2,7 +2,7 @@ from scipy.spatial import ConvexHull
 import plotly.graph_objects as go
 import numpy as np
 
-from polyhedrons import h_rep_to_v_rep, v_rep_to_h_rep
+from polyhedrons import h_rep_to_v_rep, v_rep_to_h_rep, canonicalize_v_rep
 
 
 colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan']
@@ -44,6 +44,23 @@ def display_2types_g(SignalingGame, min_v, max_v,
             name=name
         ))
 
+    if display_ir:
+        vertices = []
+        ineq, eq = SignalingGame.ir_h_rep
+        ineq, eq = boxed_vk_h_rep(ineq, eq, min_v, max_v)
+        V, R, L = h_rep_to_v_rep(ineq, eq)
+        for v in V:
+            vertices.append([v[0], 0, v[1]])
+            vertices.append([v[0], 1, v[1]])
+        print(vertices)
+        add_trace_convexhull(vertices, fig, color_irs, name="yo")
+        fig.add_trace(go.Scatter3d(
+            x=[None], y=[None], z=[None],
+            mode="markers",
+            marker=dict(size=18, color=color_irs),
+            name="IR"
+        ))
+
     # Layout
     fig.update_layout(
                     scene=dict(
@@ -75,6 +92,14 @@ def display_2types_g(SignalingGame, min_v, max_v,
         fig.write_html(save_html_file_name)
 
 
+def boxed_vk_h_rep(ineq, eq, min_v, max_v):
+    ineq.append([-min_v, 1, 0])
+    ineq.append([-min_v, 0, 1])
+    ineq.append([max_v, -1, 0])
+    ineq.append([max_v, 0, -1])
+    return ineq, eq
+
+
 def boxed_vk_v_rep(V, R, L, min_v, max_v):
     ineq, eq = v_rep_to_h_rep(V, R, L)
     ineq.append([-min_v, 1, 0])
@@ -84,28 +109,29 @@ def boxed_vk_v_rep(V, R, L, min_v, max_v):
     return h_rep_to_v_rep(ineq, eq)
 
 
-def add_trace_convexhull(vertices, fig, color="blue", name=None):
+def add_trace_convexhull(vertices, fig, color="blue", name="Object"):
+    if len(vertices) == 0:
+        return
+    vertices, _, _ = canonicalize_v_rep(vertices, [], [])
+    if name == "yo":
+        print(vertices)
     vertices = np.asarray(vertices)
-    n = len(vertices)
+    points = np.array(vertices)
+    dim = np.linalg.matrix_rank(points - points[0])
 
-    # Optionnel : nom par défaut
-    if name is None:
-        name = "Object"
-
-    if n == 1:
-        # Point
+    if dim == 0:
+        # Single point
         fig.add_trace(go.Scatter3d(
             x=vertices[:, 0],
             y=vertices[:, 1],
             z=vertices[:, 2],
             mode='markers',
-            marker=dict(size=5, color=color),
+            marker=dict(size=3, color=color),
             showlegend=False,
             name=name
         ))
 
-    elif n == 2:
-        # Segment
+    elif dim == 1:
         fig.add_trace(go.Scatter3d(
             x=vertices[:, 0],
             y=vertices[:, 1],
@@ -117,22 +143,45 @@ def add_trace_convexhull(vertices, fig, color="blue", name=None):
             name=name
         ))
 
-    elif n >= 3:
-        try:
-            hull = ConvexHull(vertices)
+    elif dim == 2:
+        def normal_vec(A, B, C):
+            A, B, C = np.array(A), np.array(B), np.array(C)
+            normal = np.cross(B - A, C - A)
+            normal /= np.linalg.norm(normal)
+            return normal
+        epsi = 0.01
+        normal = normal_vec(vertices[0], vertices[1], vertices[2])
+        vertices2 = np.empty((0, 3))
+        for v in vertices:
+            vertices2 = np.vstack([vertices2, v + epsi*normal])
+        vertices = np.vstack([vertices, vertices2])
 
-            fig.add_trace(go.Mesh3d(
-                x=vertices[:, 0],
-                y=vertices[:, 1],
-                z=vertices[:, 2],
-                i=hull.simplices[:, 0],
-                j=hull.simplices[:, 1],
-                k=hull.simplices[:, 2],
-                opacity=0.5,
-                color=color,
-                showlegend=False,
-                name=name
-            ))
+        hull = ConvexHull(vertices)
+        fig.add_trace(go.Mesh3d(
+            x=vertices[:, 0],
+            y=vertices[:, 1],
+            z=vertices[:, 2],
+            i=hull.simplices[:, 0],
+            j=hull.simplices[:, 1],
+            k=hull.simplices[:, 2],
+            opacity=0.5,
+            color=color,
+            showlegend=False,
+            name=name
+        ))
 
-        except Exception:
-            pass
+    elif dim == 3:
+        # 3D convex hull
+        hull = ConvexHull(vertices)
+        fig.add_trace(go.Mesh3d(
+            x=vertices[:, 0],
+            y=vertices[:, 1],
+            z=vertices[:, 2],
+            i=hull.simplices[:, 0],
+            j=hull.simplices[:, 1],
+            k=hull.simplices[:, 2],
+            opacity=0.5,
+            color=color,
+            showlegend=False,
+            name=name
+        ))
