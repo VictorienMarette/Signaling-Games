@@ -63,9 +63,9 @@ def display_2types_g(SignalingGame, min_v, max_v,
     # Layout
     fig.update_layout(
                     scene=dict(
-                        xaxis_title='V_'+SignalingGame.T[0],
-                        yaxis_title='p('+SignalingGame.T[0]+")",
-                        zaxis_title='V_'+SignalingGame.T[1],
+                        xaxis_title='V_'+str(SignalingGame.T[0]),
+                        yaxis_title='p('+str(SignalingGame.T[0])+")",
+                        zaxis_title='V_'+str(SignalingGame.T[1]),
                         xaxis=dict(range=[min_v, max_v]),
                         yaxis=dict(range=[0, 1]),
                         zaxis=dict(range=[min_v, max_v]),
@@ -132,9 +132,9 @@ def display_2types_BNE(SignalingGame, min_v, max_v,
     # Layout
     fig.update_layout(
                     scene=dict(
-                        xaxis_title='V_'+SignalingGame.T[0],
-                        yaxis_title='p('+SignalingGame.T[0]+")",
-                        zaxis_title='V_'+SignalingGame.T[1],
+                        xaxis_title='V_'+str(SignalingGame.T[0]),
+                        yaxis_title='p('+str(SignalingGame.T[0])+")",
+                        zaxis_title='V_'+str(SignalingGame.T[1]),
                         xaxis=dict(range=[min_v, max_v]),
                         yaxis=dict(range=[0, 1]),
                         zaxis=dict(range=[min_v, max_v]),
