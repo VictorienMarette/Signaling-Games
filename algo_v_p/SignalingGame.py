@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import chain, combinations, product
 from polyhedrons import h_rep_to_v_rep, v_rep_to_h_rep, canonicalize_h_rep
 
 
@@ -9,6 +10,26 @@ class SignalingGame:
         self.A = A
         self.Us = Us
         self.Ur = Ur
+        self.ir_h_rep = self.ir_h_rep()
+
+    def g_v_rep(self, include_ir_constraints=True):
+        # The v-rep of G will be represented (s, vk_v_rep, pk,v_rep)
+        g_v_rep = []
+        for s in self.S:
+            # Function to generate all non-empty subsets as indices
+            def non_empty_index_subsets(n):
+                return chain.from_iterable(combinations(range(n), r) for r in range(1, n+1))
+            # Cartesian product of non-empty subsets' indices
+            PA_T_indices = product(non_empty_index_subsets(len(self.T)),
+                                   non_empty_index_subsets(len(self.A)))
+            for Tt, At in PA_T_indices:
+                pk_v_rep = self.pk_v_rep(s, Tt, At)
+                vk_h_rep = self.vk_h_rep(s, Tt, At, include_ir_constraints=include_ir_constraints)
+                vk_v_rep = h_rep_to_v_rep(vk_h_rep[0], vk_h_rep[1])
+                if len(pk_v_rep[0]) > 0 and \
+                   (len(vk_v_rep[0]) > 0 or len(vk_v_rep[1]) > 0 or len(vk_v_rep[2]) > 0):
+                    g_v_rep.append((s, vk_v_rep, pk_v_rep))
+        return g_v_rep
 
     def ir_h_rep(self):
         ir_ineq = []
@@ -18,6 +39,13 @@ class SignalingGame:
             ir_ineq.extend(irs_ineq)
             ir_eq.extend(irs_eq)
         return canonicalize_h_rep(ir_ineq, ir_eq)
+
+    def vk_h_rep(self, s, Tt, At, include_ir_constraints=True):
+        vk_ineq, vk_eq = self.__vk_h_rep(s, Tt, At)
+        if include_ir_constraints:
+            vk_ineq.extend(self.ir_h_rep[0])
+            vk_eq.extend(self.ir_h_rep[1])
+        return canonicalize_h_rep(vk_ineq, vk_eq)
 
     def pk_v_rep(self, s, Tt, At):
         ineq, eq = self.__pk_h_rep(s, Tt, At)
@@ -71,6 +99,56 @@ class SignalingGame:
         V, R, L = h_rep_to_v_rep(ineq_vy, eq_vy)
 
         # Get the V-rep on Ir
+        V2 = [v[:lT] for v in V]
+        R2 = [r[:lT] for r in R]
+        L2 = [le[:lT] for le in L]
+
+        return v_rep_to_h_rep(V2, R2, L2)
+
+    def __vk_h_rep(self, s, Tt, At, include_ir_constraints=True):
+        # We define the H-rep of VY to get his V-rep for the vec (vt1, ..., vtn, y(a1), ..., y(an))
+        # [There is a better methode]
+        ineq_vy = []
+        eq_vy = []
+        lT = len(self.T)
+        lA = len(self.A)
+        # 0 <= y(ai) for ai in At
+        for i in At:
+            ineq = np.zeros(1 + lT + lA)
+            ineq[1 + lT + i] = 1
+            ineq_vy.append(ineq)
+        # 0 = y(ai) for ai not in At
+        for i in range(lA):
+            if i not in At:
+                eq = np.zeros(1 + lT + lA)
+                eq[1 + lT + i] = 1
+                eq_vy.append(eq)
+        # 0 = -1 + sum_i y(ai)
+        eq = np.zeros(1 + lT + lA)
+        eq[0] = -1
+        for i in range(lA):
+            eq[1 + lT + i] = 1
+        eq_vy.append(eq)
+        # 0 = vt - sum_i y(ai)Us(t,s,ai) for t in Tt
+        for i in Tt:
+            eq = np.zeros(1 + lT + lA)
+            eq[1 + i] = 1
+            for ia in range(lA):
+                eq[1 + lT + ia] = -self.Us_index(i, s, ia, s_index=False)
+            eq_vy.append(eq)
+        # 0 <= vt + sum_i y(ai)Us(t,s,ai) for i not in Tt
+        for i in range(lT):
+            if i not in Tt:
+                ineq = np.zeros(1 + lT + lA)
+                ineq[1 + i] = 1
+                for ia in range(lA):
+                    ineq[1 + lT + ia] = -self.Us_index(i, s, ia, s_index=False)
+                ineq_vy.append(ineq)
+
+        # Get the V-rep of VY
+        V, R, L = h_rep_to_v_rep(ineq_vy, eq_vy)
+
+        # Get the V-rep of vk
         V2 = [v[:lT] for v in V]
         R2 = [r[:lT] for r in R]
         L2 = [le[:lT] for le in L]

@@ -1,4 +1,5 @@
 from SignalingGame import SignalingGame
+from display_2types import display_2types_g
 
 
 T = ["W", "S"]
@@ -22,4 +23,4 @@ def Ur(t, s, a):
 
 
 G = SignalingGame(T, S, A, Us, Ur)
-print(G.pk_v_rep("B", [1], [0]))
+display_2types_g(G, 0, 4, ir_constrained=True, display_ir=False)
