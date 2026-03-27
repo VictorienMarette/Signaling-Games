@@ -62,17 +62,28 @@ class SignalingGame:
         # The v-rep of BNE will be represented (vk_v_rep, pk_v_rep)
         BNE_v_rep = []
         K = self.non_empty_k_in_g(include_ir_constraints=True)
-        print(len(K))
+        print("size of K: " + str(len(K)))
 
-        def non_empty_index_subsets(n):
-            return chain.from_iterable(combinations(range(n), r) for r in range(1, n+1))
+        # The case len(Kt) == 1
+        for k in K:
+            s, Tt, At = k
+            pk_v_rep = self.pk_v_rep(s, Tt, At)
+            vk_h_rep = self.vk_h_rep(s, Tt, At, include_ir_constraints=True)
+            vk_v_rep = h_rep_to_v_rep(vk_h_rep[0], vk_h_rep[1])
+            BNE_v_rep.append((vk_v_rep, pk_v_rep))
 
-        for Kti in non_empty_index_subsets(len(K)):
-            Kt = [K[i] for i in Kti]
-            vKt_v_rep = self.vKt_v_rep(Kt, include_ir_constraints=True)
-            Pjoin_v_rep = self.Pjoin_v_rep(Kt)
-            if len(vKt_v_rep[0]) > 0 and len(Pjoin_v_rep) > 0:
-                BNE_v_rep.append((vKt_v_rep, Pjoin_v_rep))
+        # The case len(Kt) == 2 and construction of the graph
+        for k1 in range(len(K)):
+            for k2 in range(len(K)):
+                if k1 != k2:
+                    Kt = [K[k1], K[k2]]
+                    vKt_v_rep = self.vKt_v_rep(Kt, include_ir_constraints=True)
+                    Pjoin_v_rep = self.Pjoin_v_rep(Kt)
+                    if len(vKt_v_rep[0]) > 0:
+                        BNE_v_rep.append((vKt_v_rep, Pjoin_v_rep))
+                        # construir le graph
+
+        print("size of BNE: " + str(len(BNE_v_rep)))
         return BNE_v_rep
 
     def ir_h_rep(self):

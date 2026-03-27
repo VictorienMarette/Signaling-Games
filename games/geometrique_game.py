@@ -1,6 +1,3 @@
-from SignalingGame import SignalingGame
-from display_2types import display_2types_g, display_2types_BNE
-
 import numpy as np
 
 size_T = 2
@@ -28,7 +25,3 @@ def Ur(t, s, a):
     else:
         a2 = 1
     return Ur_vec[(t) * size_S * 2 + (s)*2 + a2]
-
-
-G = SignalingGame(T, S, A, Us, Ur)
-display_2types_g(G, 0, 10)

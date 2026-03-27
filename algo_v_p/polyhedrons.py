@@ -34,9 +34,9 @@ def v_rep_to_h_rep(V, R, L):
 def canonicalize_h_rep(ineq, eq):
     lin_set = set(list(range(len(eq))))
     mat = cdd.matrix_from_array(eq+ineq, rep_type=cdd.RepType.INEQUALITY, lin_set=lin_set)
-    index_non_redundancies = cdd.matrix_canonicalize(mat)[2]
-    ineq = [mat.array[i] for i in index_non_redundancies if i not in mat.lin_set and i is not None]
-    eq = [mat.array[i] for i in index_non_redundancies if i in mat.lin_set and i is not None]
+    cdd.matrix_canonicalize(mat)
+    ineq = [ineq for i, ineq in enumerate(mat.array) if i not in mat.lin_set]
+    eq = [mat.array[i] for i in mat.lin_set]
     return ineq, eq
 
 
@@ -46,12 +46,10 @@ def canonicalize_v_rep(V, R, L):
     L2 = [np.insert(le, 0, 0) for le in L]
     lin_set = list(range(len(L2)))
     mat = cdd.matrix_from_array(L2+R2+V2, rep_type=cdd.RepType.GENERATOR, lin_set=lin_set)
-    i_non_red = cdd.matrix_canonicalize(mat)[2]
+    cdd.matrix_canonicalize(mat)
     points = mat.array
-    V = [points[i][1:] for i in range(len(points))
-         if i_non_red[i] is not None and points[i][0] == 1]
-    R = [points[i][1:] for i in range(len(points))
-         if i_non_red[i] is not None and points[i][0] == 0 and i not in mat.lin_set]
-    L = [points[i][1:] for i in range(len(points))
-         if i_non_red[i] is not None and points[i][0] == 0 and i in mat.lin_set]
+    V = [v[1:] for v in points if v[0] == 1]
+    R = [points[i][1:] for i in range(len(points)) if points[i][0] == 0 and i not in mat.lin_set]
+    L = [points[i][1:] for i in range(len(points)) if points[i][0] == 0 and i in mat.lin_set]
+    return V, R, L
     return V, R, L
