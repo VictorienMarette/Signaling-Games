@@ -1,7 +1,3 @@
-from SignalingGame import SignalingGame
-from display_2types import display_2types_g, display_2types_BNE
-
-
 # Types
 T = ["W", "S", "X", "Y"]  # maintenant 4 types
 S = ["B", "Q"]
@@ -30,8 +26,3 @@ def Ur(t, s, a):
     if (t == "X" and a == "C") or (t == "Y" and a == "F"):
         tot += 1
     return tot
-
-
-G = SignalingGame(T, S, A, Us, Ur)
-# isplay_2types_BNE(G, 0, 10)
-G.BNE_v_rep()

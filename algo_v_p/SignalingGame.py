@@ -1,7 +1,22 @@
 import numpy as np
 from itertools import chain, combinations, product
 from functools import lru_cache
+import networkx as nx
 from polyhedrons import h_rep_to_v_rep, v_rep_to_h_rep, canonicalize_h_rep, canonicalize_v_rep
+
+
+def all_biger_than2_cliques(G, max_size=None):
+    """
+    Yield all non-empty cliques of the undirected graph G.
+    If max_size is given, only yield cliques with size <= max_size.
+    """
+    for clique in nx.find_cliques(G):  # maximal cliques
+        n = len(clique)
+        # Determine sizes to generate
+        sizes = range(3, n+1) if max_size is None else range(3, min(max_size, n)+1)
+        for k in sizes:
+            for sub in combinations(clique, k):
+                yield tuple(sub)
 
 
 def memoize_lists(func):
@@ -58,11 +73,15 @@ class SignalingGame:
         return g_v_rep
 
     # mieux vaut memoiser et faire les technique du 2 a 2
-    def BNE_v_rep(self):
+    def BNE_v_rep(self, Kt_size_limited_by_lenT=True):
         # The v-rep of BNE will be represented (vk_v_rep, pk_v_rep)
         BNE_v_rep = []
         K = self.non_empty_k_in_g(include_ir_constraints=True)
         print("size of K: " + str(len(K)))
+
+        construct_graph = len(self.T) > 2 or not Kt_size_limited_by_lenT
+        graph_non_empty_v = nx.Graph()
+        graph_non_empty_v.add_nodes_from(range(len(K)))
 
         # The case len(Kt) == 1
         for k in K:
@@ -81,7 +100,21 @@ class SignalingGame:
                     Pjoin_v_rep = self.Pjoin_v_rep(Kt)
                     if len(vKt_v_rep[0]) > 0:
                         BNE_v_rep.append((vKt_v_rep, Pjoin_v_rep))
-                        # construir le graph
+                        if construct_graph:
+                            graph_non_empty_v.add_edges_from([(k1, k2)])
+
+        # The case len(Kt) > 2 (pas vraiment teste)
+        if construct_graph:
+            max_size = None
+            if Kt_size_limited_by_lenT:
+                max_size = len(self.T)
+            cliques = all_biger_than2_cliques(graph_non_empty_v, max_size=max_size)
+            for c in cliques:
+                Kt = [K[i] for i in c]
+                vKt_v_rep = self.vKt_v_rep(Kt, include_ir_constraints=True)
+                Pjoin_v_rep = self.Pjoin_v_rep(Kt)
+                if len(vKt_v_rep[0]) > 0:
+                    BNE_v_rep.append((vKt_v_rep, Pjoin_v_rep))
 
         print("size of BNE: " + str(len(BNE_v_rep)))
         return BNE_v_rep
