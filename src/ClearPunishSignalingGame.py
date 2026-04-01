@@ -86,11 +86,15 @@ class ClearPunishSignalingGame(SignalingGame):
         i = 0
         while P is None:
             Us_vec = 10*np.random.rand(size_T * size_S * size_A)
+
             def Us(t, s, a, offset=i):
                 return Us_vec[(t-1) * size_S * size_A + (s-1)*size_A + a-1]
+
             Ur_vec = 10*np.random.rand(size_T * size_S * size_A)
+
             def Ur(t, s, a, offset=i):
                 return Ur_vec[(t-1) * size_S * size_A + (s-1)*size_A + a-1]
+
             P = cls.get_clear_punish(T, S, A, Us)
             i += 1
         return cls(p, T, S, A, Us, Ur, P)
