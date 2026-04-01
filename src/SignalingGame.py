@@ -1,8 +1,13 @@
 import numpy as np
 
+from .SignalingGame_BNE_calculations import SignalingGame_BNE_calculations
+from .SignalingGame_CE_calculations import SignalingGame_CE_calculations
 
-class SignalingGame:
+
+class SignalingGame(SignalingGame_BNE_calculations, SignalingGame_CE_calculations):
     def __init__(self, T, S, A, Us, Ur):
+        SignalingGame_BNE_calculations.__init__(self, T, S, A, Us, Ur)
+        SignalingGame_CE_calculations.__init__(self, T, S, A, Us, Ur)
         self.T = T
         self.S = S
         self.A = A
@@ -10,22 +15,24 @@ class SignalingGame:
         self.Ur = Ur
 
     def g_v_rep(self, include_ir_constraints=True):
-        pass
+        return SignalingGame_BNE_calculations.g_v_rep(
+                self, include_ir_constraints=include_ir_constraints)
 
     def BNE_v_rep(self, Kt_size_limited_by_lenT=True):
-        pass
+        return SignalingGame_BNE_calculations.BNE_v_rep(
+                self, Kt_size_limited_by_lenT=Kt_size_limited_by_lenT)
 
-    def get_CE_vertexes_for_deviation_punish(self, p, nu):
+    def CE_outcome_v_rep_for_deviation_punish(self, p, nu):
         pass
 
     def print_CE_outcome_for_deviation_punish(self, p, nu):
         pass
 
     def print_CE_deviation_punish(self, nu, end="\n"):
-        pass
+        SignalingGame_CE_calculations.print_deviation_punish(self, nu, end=end)
 
-    def print_outcome(self, x, end="\n"):
-        pass
+    def print_outcome(self, p, x, end="\n"):
+        SignalingGame_CE_calculations.print_outcome(self, p, x, end=end)
 
     def __str__(self):
         txt = "SignalingGame:\n"

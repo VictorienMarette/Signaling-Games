@@ -2,7 +2,7 @@ import numpy as np
 from itertools import chain, combinations, product
 import networkx as nx
 
-from polyhedrons import h_rep_to_v_rep, v_rep_to_h_rep, canonicalize_h_rep, canonicalize_v_rep
+from .polyhedrons import h_rep_to_v_rep, v_rep_to_h_rep, canonicalize_h_rep, canonicalize_v_rep
 from utils.memoization import memoize_lists
 from utils.graph_func import all_biger_than2_cliques
 

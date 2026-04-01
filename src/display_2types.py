@@ -2,7 +2,7 @@ from scipy.spatial import ConvexHull
 import plotly.graph_objects as go
 import numpy as np
 
-from polyhedrons import h_rep_to_v_rep, v_rep_to_h_rep, canonicalize_v_rep
+from .polyhedrons import h_rep_to_v_rep, v_rep_to_h_rep, canonicalize_v_rep
 
 
 colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan']
