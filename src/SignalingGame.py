@@ -23,10 +23,10 @@ class SignalingGame(SignalingGame_BNE_calculations, SignalingGame_CE_calculation
                 self, Kt_size_limited_by_lenT=Kt_size_limited_by_lenT)
 
     def CE_outcome_v_rep_for_deviation_punish(self, p, nu):
-        pass
+        return SignalingGame_CE_calculations.get_ce_vertexes_for_deviation_punish(self, p, nu)
 
     def print_CE_outcome_for_deviation_punish(self, p, nu):
-        pass
+        SignalingGame_CE_calculations.print_ce_outcome_for_deviation_punish(self, p, nu)
 
     def print_CE_deviation_punish(self, nu, end="\n"):
         SignalingGame_CE_calculations.print_deviation_punish(self, nu, end=end)

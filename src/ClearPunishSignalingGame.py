@@ -1,16 +1,20 @@
 import numpy as np
 
-from SignalingGame import SignalingGame
-from simplex import in_simplex
+from .SignalingGame import SignalingGame
 
 
 class ClearPunishSignalingGame(SignalingGame):
 
-    def __init__(self, p, T, S, A, Us, Ur, P):
-        super().__init__(p, T, S, A, Us, Ur)
-        self.P = P
-        if not self.chek_punish():
-            raise ValueError("P isn't a clear punish")
+    def __init__(self, T, S, A, Us, Ur, P=None):
+        super().__init__(T, S, A, Us, Ur)
+        if P is None:
+            self.P = ClearPunishSignalingGame.get_clear_punish(T, S, A, Us)
+            if self.P is None:
+                raise ValueError("G doesn't have clear punishment")
+        else:
+            self.P = P
+            if not self.chek_punish():
+                raise ValueError("P isn't a clear punish")
 
     def chek_punish(self):
         if self.P is None:
@@ -22,7 +26,7 @@ class ClearPunishSignalingGame(SignalingGame):
                         return False
         return True
 
-    def get_ce_vertexes(self):
+    def CE_outcome_v_rep(self, p):
         i = 0
         nu = np.zeros(len(self.A)*len(self.T)*len(self.S)*(len(self.S)-1))  
         for t in self.T:
@@ -31,22 +35,18 @@ class ClearPunishSignalingGame(SignalingGame):
                     if s != s2:
                         for a in self.A:
                             if a == self.P(s2):
-                                nu[i] = 1 
+                                nu[i] = 1
                             i += 1
-        return self.get_ce_vertexes_for_deviation_punish(nu)
+        return self.CE_outcome_v_rep_for_deviation_punish(p, nu)
 
-    def print_ce_outcome(self):
-        vertexes = self.get_ce_vertexes()
+    def print_CE_outcome(self, p):
+        vertexes = self.CE_outcome_v_rep(p)
         print("Vertex of outcome space:")
         i = 1
         for v in vertexes:
             print("Vertexe " + str(i), end="")
-            self.print_outcome(v)
+            self.print_outcome(p, v)
             i += 1
-
-    def is_ce(self, x):
-        cond = self.__get_ce_conditions()
-        return in_simplex(x, cond[0], cond[1], 0.0001)
 
     @staticmethod
     def get_clear_punish(T, S, A, Us):
