@@ -28,7 +28,7 @@ class ClearPunishSignalingGame(SignalingGame):
 
     def CE_outcome_v_rep(self, p):
         i = 0
-        nu = np.zeros(len(self.A)*len(self.T)*len(self.S)*(len(self.S)-1))  
+        nu = np.zeros(len(self.A)*len(self.T)*len(self.S)*(len(self.S)-1))
         for t in self.T:
             for s in self.S:
                 for s2 in self.S:
